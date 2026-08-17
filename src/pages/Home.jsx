@@ -12,20 +12,20 @@ import {
 } from 'lucide-react';
 
 export default function Home() {
-  const { user }   = useAuth();
-  const navigate   = useNavigate();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
 
   // Fetch live doctors & departments
   const { data: doctors, isLoading: docsLoading } = useQuery({
     queryKey: ['public-doctors'],
-    queryFn:  () => publicApi.getDoctors().then((r) => r.data.data),
+    queryFn: () => publicApi.getDoctors().then((r) => r.data.data),
     refetchInterval: 30000,
   });
 
   const { data: depts } = useQuery({
     queryKey: ['public-departments'],
-    queryFn:  () => publicApi.getDepartments().then((r) => r.data.data),
+    queryFn: () => publicApi.getDepartments().then((r) => r.data.data),
   });
 
   const filteredDoctors = (doctors || []).filter((doc) => {
@@ -34,10 +34,10 @@ export default function Home() {
   });
 
   const ROLE_HOME_ROUTES = {
-    admin:        '/admin',
+    admin: '/admin',
     receptionist: '/receptionist',
-    doctor:       '/doctor',
-    patient:      '/patient',
+    doctor: '/doctor',
+    patient: '/patient',
   };
 
   return (
@@ -139,7 +139,7 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* ─── HERO BANNER SECTION ─────────────────────────────────────────── */}
+      {/* ─── HERO BANNER SECTION ───── */}
       <section style={{
         position: 'relative',
         padding: '5rem 2rem 4rem',
@@ -209,9 +209,9 @@ export default function Home() {
           }}>
             {[
               { icon: Stethoscope, color: '#0D9488', title: '6 Specialist Doctors', desc: 'Cornea, Retina, Cataract & Glaucoma' },
-              { icon: Zap,          color: '#F59E0B', title: 'Automated Routing',   desc: 'Instant least-busy doctor assignment' },
-              { icon: DoorOpenIcon, color: '#6366F1', title: 'Dynamic Rooms',       desc: 'Real-time room tracking per shift' },
-              { icon: FileText,     color: '#10B981', title: 'Digital Prescriptions',desc: 'Branded PDF generated at visit completion' },
+              { icon: Zap, color: '#F59E0B', title: 'Automated Routing', desc: 'Instant least-busy doctor assignment' },
+              { icon: DoorOpenIcon, color: '#6366F1', title: 'Dynamic Rooms', desc: 'Real-time room tracking per shift' },
+              { icon: FileText, color: '#10B981', title: 'Digital Prescriptions', desc: 'Branded PDF generated at visit completion' },
             ].map((card, i) => (
               <div key={i} className="card" style={{ textAlign: 'left', background: 'rgba(26, 34, 54, 0.7)' }}>
                 <div style={{
@@ -342,7 +342,7 @@ export default function Home() {
             <div className="grid-3">
               {filteredDoctors.map((doc) => (
                 <div key={doc._id} className="card" style={{ position: 'relative' }}>
-                  
+
                   {/* Doctor Top Info */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                     <div style={{
