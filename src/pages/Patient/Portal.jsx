@@ -15,9 +15,9 @@ function TicketTracker({ status }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
       {STATUS_STEPS.map((s, i) => {
-        const done    = i < current;
-        const active  = i === current;
-        const labels  = ['Scheduled', 'Waiting', 'With Doctor', 'Procedure', 'Ready', 'Done'];
+        const done = i < current;
+        const active = i === current;
+        const labels = ['Scheduled', 'Waiting', 'With Doctor', 'Procedure', 'Ready', 'Done'];
         return (
           <div key={s} style={{ display: 'flex', alignItems: 'center' }}>
             <div style={{
@@ -41,14 +41,14 @@ export default function PatientPortal() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-history'],
-    queryFn:  () => patientApi.getMyHistory().then((r) => r.data),
+    queryFn: () => patientApi.getMyHistory().then((r) => r.data),
   });
 
   if (isLoading) return <PageLoader />;
 
-  const patient  = data?.patient;
-  const visits   = data?.visits || [];
-  const latest   = visits[0];
+  const patient = data?.patient;
+  const visits = data?.visits || [];
+  const latest = visits[0];
   const isActive = latest && !['completed', 'cancelled'].includes(latest.status);
 
   return (
@@ -86,7 +86,7 @@ export default function PatientPortal() {
               <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', background: 'var(--color-surface-3)', borderRadius: 4, padding: '1px 6px', color: 'var(--color-text-muted)' }}>{latest.ticketNumber}</span>
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-              {latest.department?.name} • Dr. {latest.assignedDoctor?.name || 'Being assigned'} • Room {latest.roomNumber || '—'}
+              {latest.department?.name} • {latest.assignedDoctor?.name || 'Being assigned'} • Room {latest.roomNumber || '—'}
             </div>
             <TicketTracker status={latest.status} />
           </div>
@@ -111,7 +111,7 @@ export default function PatientPortal() {
                       </span>
                     </div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-                      {v.department?.name} • Dr. {v.assignedDoctor?.name || '—'} • Room {v.roomNumber || '—'}
+                      {v.department?.name} • {v.assignedDoctor?.name || '—'} • Room {v.roomNumber || '—'}
                     </div>
                     {v.diagnosis && (
                       <div style={{ marginTop: '0.375rem', fontSize: '0.875rem' }}>
