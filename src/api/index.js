@@ -66,6 +66,7 @@ export const analyticsApi = {
 };
 
 export const publicApi = {
-  getDepartments: () => api.get('/departments'),
-  getDoctors:     () => api.get('/public/doctors'),
+  getDepartments:        ()       => api.get('/departments'),
+  getDoctors:            ()       => api.get('/public/doctors'),
+  getDoctorsByDepartment:(deptId) => api.get(`/departments/${deptId}/doctors`),
 };

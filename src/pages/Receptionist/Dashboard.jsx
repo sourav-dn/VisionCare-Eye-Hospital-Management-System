@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { visitApi } from '../../api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { visitApi, publicApi } from '../../api';
 import Topbar from '../../components/Topbar';
 import StatusBadge from '../../components/StatusBadge';
 import { StatCard, PageLoader } from '../../components/UI';
 import { useSocket } from '../../context/SocketContext';
 import { Link } from 'react-router-dom';
-import { ClipboardList, Clock, CheckCircle2, Ticket, Plus } from 'lucide-react';
+import { ClipboardList, Clock, CheckCircle2, Ticket, Plus, UserCheck, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function ReceptionistDashboard() {
   const { on, off } = useSocket() || {};
+  const queryClient = useQueryClient();
   const [liveUpdates, setLiveUpdates] = useState(0);
+  const [reassignVisit, setReassignVisit] = useState(null);
+  const [selectedDoctorId, setSelectedDoctorId] = useState('');
 
   const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ['today-stats'],
@@ -24,6 +28,22 @@ export default function ReceptionistDashboard() {
     refetchInterval: 20000,
   });
 
+  const { data: allDoctors } = useQuery({
+    queryKey: ['public-doctors'],
+    queryFn:  () => publicApi.getDoctors().then((r) => r.data.data),
+  });
+
+  const reassignMut = useMutation({
+    mutationFn: ({ visitId, doctorId }) => visitApi.reassignDoctor(visitId, { doctorId }),
+    onSuccess: () => {
+      toast.success('Doctor assigned successfully!');
+      queryClient.invalidateQueries(['receptionist-queue']);
+      setReassignVisit(null);
+      setSelectedDoctorId('');
+    },
+    onError: (e) => toast.error(e.response?.data?.message || 'Assignment failed'),
+  });
+
   // Live socket updates
   useEffect(() => {
     if (!on) return;
@@ -31,6 +51,25 @@ export default function ReceptionistDashboard() {
     on('queue-update', handler);
     return () => off?.('queue-update', handler);
   }, [on, off, refetchVisits, refetchStats]);
+
+  const handleOpenReassign = (visit) => {
+    setReassignVisit(visit);
+    setSelectedDoctorId(visit.assignedDoctor?._id || '');
+  };
+
+  const handleSaveReassign = () => {
+    if (!selectedDoctorId) {
+      toast.error('Please select a doctor');
+      return;
+    }
+    reassignMut.mutate({ visitId: reassignVisit._id, doctorId: selectedDoctorId });
+  };
+
+  // Filter doctors that match the visit's department or allow all
+  const filteredDoctors = (allDoctors || []).filter((doc) => {
+    if (!reassignVisit?.department) return true;
+    return doc.department?._id === reassignVisit.department._id || doc.department === reassignVisit.department._id;
+  });
 
   return (
     <div className="animate-fadeIn">
@@ -72,7 +111,7 @@ export default function ReceptionistDashboard() {
           ) : (
             <div className="table-wrapper">
               <table className="table">
-                <thead><tr><th>#</th><th>Ticket</th><th>Patient</th><th>Department</th><th>Doctor</th><th>Room</th><th>Status</th><th>Time</th></tr></thead>
+                <thead><tr><th>#</th><th>Ticket</th><th>Patient</th><th>Department</th><th>Doctor</th><th>Room</th><th>Status</th><th>Time</th><th>Action</th></tr></thead>
                 <tbody>
                   {todayVisits.map((v, i) => (
                     <tr key={v._id}>
@@ -89,7 +128,13 @@ export default function ReceptionistDashboard() {
                         </div>
                       </td>
                       <td style={{ color: 'var(--color-text-muted)', fontSize: '0.8125rem' }}>{v.department?.name}</td>
-                      <td style={{ fontSize: '0.875rem' }}>{v.assignedDoctor?.name || '—'}</td>
+                      <td>
+                        {v.assignedDoctor?.name ? (
+                          <span style={{ fontWeight: 500 }}>{v.assignedDoctor.name}</span>
+                        ) : (
+                          <span style={{ color: 'var(--color-warning)', fontSize: '0.8125rem', fontWeight: 600 }}>Unassigned</span>
+                        )}
+                      </td>
                       <td>
                         {v.roomNumber
                           ? <span style={{ background: 'var(--color-teal-glow)', border: '1px solid var(--color-teal)', borderRadius: 6, padding: '2px 8px', fontSize: '0.8125rem', color: 'var(--color-teal-light)' }}>Rm {v.roomNumber}</span>
@@ -99,6 +144,15 @@ export default function ReceptionistDashboard() {
                       <td style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>
                         {new Date(v.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                       </td>
+                      <td>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => handleOpenReassign(v)}
+                          title="Assign or Reassign Doctor"
+                        >
+                          <UserCheck size={13} /> {v.assignedDoctor ? 'Change' : 'Assign'}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -106,6 +160,56 @@ export default function ReceptionistDashboard() {
             </div>
           )}
         </div>
+
+        {/* Reassign Doctor Modal */}
+        {reassignVisit && (
+          <div className="modal-overlay" onClick={() => setReassignVisit(null)}>
+            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
+              <div className="flex-between" style={{ marginBottom: '1.25rem' }}>
+                <h3 style={{ margin: 0, fontFamily: 'Outfit', fontSize: '1.125rem' }}>
+                  Assign Doctor
+                </h3>
+                <button className="btn btn-ghost btn-sm" onClick={() => setReassignVisit(null)}>
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div style={{ background: 'var(--color-surface-3)', borderRadius: 8, padding: '0.875rem 1rem', marginBottom: '1.25rem', fontSize: '0.8125rem' }}>
+                <div><strong>Patient:</strong> {reassignVisit.patient?.name} ({reassignVisit.ticketNumber})</div>
+                <div style={{ marginTop: 4 }}><strong>Department:</strong> {reassignVisit.department?.name}</div>
+                <div style={{ marginTop: 4 }}><strong>Current Doctor:</strong> {reassignVisit.assignedDoctor?.name || 'Unassigned'}</div>
+              </div>
+
+              <div className="form-group">
+                <label className="label">Select Doctor</label>
+                <select
+                  className="input"
+                  value={selectedDoctorId}
+                  onChange={(e) => setSelectedDoctorId(e.target.value)}
+                >
+                  <option value="">-- Choose a doctor --</option>
+                  {(filteredDoctors.length > 0 ? filteredDoctors : (allDoctors || [])).map((doc) => (
+                    <option key={doc._id} value={doc._id}>
+                      {doc.name} ({doc.department?.name || 'General'}) {doc.currentRoom ? `• Room ${doc.currentRoom}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                <button className="btn btn-secondary" onClick={() => setReassignVisit(null)}>Cancel</button>
+                <button
+                  className="btn btn-primary"
+                  disabled={!selectedDoctorId || reassignMut.isPending}
+                  onClick={handleSaveReassign}
+                >
+                  <UserCheck size={15} /> {reassignMut.isPending ? 'Saving...' : 'Confirm Assignment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

@@ -16,12 +16,19 @@ export default function TicketCreate() {
   const [patient,     setPatient]    = useState(null);
   const [isNew,       setIsNew]      = useState(false);
   const [deptId,      setDeptId]     = useState('');
+  const [doctorId,    setDoctorId]   = useState('');
   const [complaint,   setComplaint]  = useState('');
   const [newPatient,  setNewPatient] = useState({ name: '', age: '', gender: '', address: '', allergies: '', chronicConditions: '' });
 
   const set = (k) => (e) => setNewPatient((f) => ({ ...f, [k]: e.target.value }));
 
   const { data: departments } = useQuery({ queryKey: ['departments'], queryFn: () => publicApi.getDepartments().then((r) => r.data.data) });
+
+  const { data: deptDoctors } = useQuery({
+    queryKey: ['dept-doctors', deptId],
+    queryFn:  () => deptId ? publicApi.getDoctorsByDepartment(deptId).then((r) => r.data.data) : Promise.resolve([]),
+    enabled:  !!deptId,
+  });
 
   const searchMut = useMutation({
     mutationFn: () => patientApi.search({ phone }).then((r) => r.data),
@@ -45,7 +52,13 @@ export default function TicketCreate() {
   });
 
   const createTicketMut = useMutation({
-    mutationFn: () => visitApi.create({ patientId: patient._id, departmentId: deptId, bookingType: 'walk-in', chiefComplaint: complaint }),
+    mutationFn: () => visitApi.create({
+      patientId:       patient._id,
+      departmentId:    deptId,
+      assignedDoctor:  doctorId || undefined,
+      bookingType:     'walk-in',
+      chiefComplaint:  complaint,
+    }),
     onSuccess: (res) => {
       toast.success(`Ticket ${res.data.data.ticketNumber} created!`);
       navigate('/receptionist');
@@ -53,7 +66,8 @@ export default function TicketCreate() {
     onError: (e) => toast.error(e.response?.data?.message || 'Ticket creation failed'),
   });
 
-  const selectedDept = (departments || []).find((d) => d._id === deptId);
+  const selectedDept   = (departments || []).find((d) => d._id === deptId);
+  const selectedDoctor = (deptDoctors || []).find((doc) => doc._id === doctorId);
 
   return (
     <div className="animate-fadeIn">
@@ -158,7 +172,7 @@ export default function TicketCreate() {
               <h3 style={{ margin: '0 0 1rem', fontFamily: 'Outfit' }}>Select Department</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.75rem', marginBottom: '1.25rem' }}>
                 {(departments || []).map((d) => (
-                  <button key={d._id} onClick={() => setDeptId(d._id)}
+                  <button key={d._id} onClick={() => { setDeptId(d._id); setDoctorId(''); }}
                     style={{
                       padding: '0.875rem', borderRadius: 10, border: `2px solid ${deptId === d._id ? 'var(--color-teal)' : 'var(--color-border)'}`,
                       background: deptId === d._id ? 'var(--color-teal-glow)' : 'var(--color-surface-3)',
@@ -169,6 +183,50 @@ export default function TicketCreate() {
                   </button>
                 ))}
               </div>
+
+              {/* Doctor Assignment Selection */}
+              {deptId && (
+                <div style={{ marginBottom: '1.25rem', padding: '1rem', background: 'var(--color-surface-2)', borderRadius: 10, border: '1px solid var(--color-border)' }}>
+                  <label className="label" style={{ marginBottom: '0.5rem', fontWeight: 600 }}>Doctor Assignment</label>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setDoctorId('')}
+                      style={{
+                        padding: '0.5rem 0.875rem', borderRadius: 8, fontSize: '0.8125rem', cursor: 'pointer',
+                        background: doctorId === '' ? 'var(--color-teal)' : 'var(--color-surface-3)',
+                        color: doctorId === '' ? '#fff' : 'var(--color-text-muted)',
+                        border: `1px solid ${doctorId === '' ? 'var(--color-teal)' : 'var(--color-border)'}`,
+                        fontWeight: doctorId === '' ? 600 : 400,
+                      }}
+                    >
+                      ⚡ Auto Assign (Least Busy)
+                    </button>
+                    {(deptDoctors || []).map((doc) => (
+                      <button
+                        key={doc._id}
+                        type="button"
+                        onClick={() => setDoctorId(doc._id)}
+                        style={{
+                          padding: '0.5rem 0.875rem', borderRadius: 8, fontSize: '0.8125rem', cursor: 'pointer',
+                          background: doctorId === doc._id ? 'var(--color-teal)' : 'var(--color-surface-3)',
+                          color: doctorId === doc._id ? '#fff' : 'var(--color-text-muted)',
+                          border: `1px solid ${doctorId === doc._id ? 'var(--color-teal)' : 'var(--color-border)'}`,
+                          fontWeight: doctorId === doc._id ? 600 : 400,
+                        }}
+                      >
+                        Dr. {doc.name?.replace(/^Dr\.\s*/i, '')}
+                      </button>
+                    ))}
+                  </div>
+                  {deptDoctors?.length === 0 && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--color-warning)' }}>
+                      ⚠️ No doctors currently configured in this department. System will queue as unassigned or you can assign once doctor is active.
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="form-group">
                 <label className="label">Chief Complaint (optional)</label>
                 <textarea className="input" value={complaint} onChange={(e) => setComplaint(e.target.value)} placeholder="Reason for visit..." style={{ minHeight: 60 }} />
@@ -194,6 +252,7 @@ export default function TicketCreate() {
                   ['Phone', patient.phone],
                   ['Patient ID', patient.patientId],
                   ['Department', selectedDept?.name || '—'],
+                  ['Assigned Doctor', selectedDoctor ? selectedDoctor.name : 'Auto Assign (Balanced Queue)'],
                   ['Booking Type', 'Walk-in'],
                   ['Chief Complaint', complaint || 'Not specified'],
                 ].map(([label, value]) => (
@@ -205,7 +264,9 @@ export default function TicketCreate() {
               </div>
             </div>
             <div className="alert alert-info" style={{ marginBottom: '1.25rem', fontSize: '0.8125rem' }}>
-              The system will automatically assign the least-busy available doctor in <strong>{selectedDept?.name}</strong> and attach their current room to this ticket.
+              {selectedDoctor
+                ? `Patient will be directly assigned to ${selectedDoctor.name}.`
+                : `The system will automatically assign the least-busy available doctor in ${selectedDept?.name} and attach their room.`}
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
               <button className="btn btn-secondary" onClick={() => setStep(2)}>Back</button>
