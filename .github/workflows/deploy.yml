@@ -1,0 +1,28 @@
+name: 🚀 Deploy Frontend to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🌐 SSH into VPS & Build Frontend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            set -e
+            echo "🚀 Deploying Frontend..."
+            cd /home/sourav/eye-hospital/frontend
+            git pull origin main
+            npm install
+            npm run build
+            echo "✅ Frontend built and deployed successfully!"
