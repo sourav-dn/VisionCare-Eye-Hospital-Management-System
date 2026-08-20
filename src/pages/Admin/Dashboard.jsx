@@ -64,7 +64,7 @@ export default function AdminDashboard() {
           <StatCard label="Active Doctors"     value={overview?.activeDoctors}icon={Stethoscope}   color="#10B981" sub={`${overview?.activeRooms} rooms occupied`} />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.25rem' }}>
+        <div className="grid-charts">
           {/* Visit trend */}
           <div className="card">
             <h3 style={{ margin: '0 0 1.25rem', fontSize: '1rem', fontFamily: 'Outfit' }}>30-Day Visit Trend</h3>

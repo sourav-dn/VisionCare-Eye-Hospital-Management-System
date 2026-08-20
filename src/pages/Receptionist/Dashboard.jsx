@@ -85,11 +85,11 @@ export default function ReceptionistDashboard() {
         </div>
 
         {/* Quick actions */}
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-          <Link to="/receptionist/new-ticket" className="btn btn-primary btn-lg">
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <Link to="/receptionist/new-ticket" className="btn btn-primary btn-lg" style={{ flex: '1 1 auto', justifyContent: 'center', minWidth: 160 }}>
             <Plus size={18} /> New Ticket
           </Link>
-          <Link to="/receptionist/prescriptions" className="btn btn-secondary btn-lg">
+          <Link to="/receptionist/prescriptions" className="btn btn-secondary btn-lg" style={{ flex: '1 1 auto', justifyContent: 'center', minWidth: 160 }}>
             Ready for Pickup ({(todayVisits || []).filter((v) => v.status === 'ready-for-prescription').length})
           </Link>
         </div>

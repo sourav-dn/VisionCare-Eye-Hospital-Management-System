@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { publicApi } from '../api';
@@ -8,13 +8,24 @@ import {
   Eye, Calendar, Stethoscope, Clock, ShieldCheck,
   CheckCircle2, ArrowRight, Phone, MapPin, Sparkles,
   Building2, FileText, UserCheck, HeartPulse, ChevronRight,
-  LogIn, UserPlus, Zap
+  LogIn, UserPlus, Zap, Menu, X,
 } from 'lucide-react';
 
 export default function Home() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [menuTop, setMenuTop] = useState(0);
+  const navRef = useRef(null);
+
+  const toggleMobileMenu = useCallback(() => {
+    if (!mobileMenuOpen && navRef.current) {
+      const rect = navRef.current.getBoundingClientRect();
+      setMenuTop(rect.bottom);
+    }
+    setMobileMenuOpen((v) => !v);
+  }, [mobileMenuOpen]);
 
   // Fetch live doctors & departments
   const { data: doctors, isLoading: docsLoading } = useQuery({
@@ -47,11 +58,11 @@ export default function Home() {
       <div style={{
         background: 'linear-gradient(90deg, #0F172A, #0D9488, #0F172A)',
         borderBottom: '1px solid var(--color-border)',
-        padding: '0.5rem 1.5rem',
+        padding: '0.5rem 1rem',
         fontSize: '0.8125rem',
         display: 'flex',
         alignItems: 'center',
-        justify: 'space-between',
+        justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '0.5rem',
       }}>
@@ -59,31 +70,32 @@ export default function Home() {
           <span className="badge badge-available" style={{ padding: '2px 8px', fontSize: '0.7rem' }}>
             <span className="live-dot" style={{ width: 6, height: 6 }} /> Open Today
           </span>
-          <span style={{ color: 'var(--color-text-muted)' }}>
+          <span style={{ color: 'var(--color-text-muted)' }} className="hide-mobile">
             🏥 Single-Branch Excellence • Walk-In & Online Appointments Active
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', color: 'var(--color-text-muted)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--color-text-muted)', flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <Phone size={13} color="var(--color-teal-light)" /> Emergency: +880 1711-000000
+            <Phone size={13} color="var(--color-teal-light)" /> +880 1711-000000
           </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <MapPin size={13} color="var(--color-teal-light)" /> VisionCare Center, Gulshan Ave, Dhaka
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }} className="hide-mobile">
+            <MapPin size={13} color="var(--color-teal-light)" /> Gulshan Ave, Dhaka
           </span>
         </div>
       </div>
 
       {/* ─── NAVIGATION BAR ─────────────────────────────────────────────── */}
-      <nav style={{
+      <nav ref={navRef} style={{
         position: 'sticky', top: 0, zIndex: 100,
         background: 'rgba(17, 24, 39, 0.92)',
         backdropFilter: 'blur(16px)',
         borderBottom: '1px solid var(--color-border)',
-        padding: '1rem 2rem',
+        padding: '0.875rem 1.5rem',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: '1rem',
       }}>
         {/* Brand */}
-        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
           <div style={{
             width: 44, height: 44,
             background: 'linear-gradient(135deg, rgba(13,148,136,0.25), rgba(13,148,136,0.08))',
@@ -91,26 +103,27 @@ export default function Home() {
             borderRadius: 12,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: 'var(--shadow-glow)',
+            flexShrink: 0,
           }}>
             <Eye size={24} color="var(--color-teal-light)" />
           </div>
           <div>
-            <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.25rem', color: '#E2E8F0', letterSpacing: '-0.02em' }}>
+            <div style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.125rem', color: '#E2E8F0', letterSpacing: '-0.02em' }}>
               VisionCare
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--color-teal-light)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: '0.65rem', color: 'var(--color-teal-light)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }} className="hide-mobile">
               Eye Hospital & Laser Center
             </div>
           </div>
         </Link>
 
-        {/* Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', fontSize: '0.875rem', fontWeight: 500 }}>
+        {/* Desktop nav links */}
+        <div className="home-nav-links">
           <a href="#services" style={{ color: 'var(--color-text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--color-teal-light)'} onMouseLeave={(e) => e.target.style.color = 'var(--color-text-muted)'}>
             Specialties
           </a>
           <a href="#doctors" style={{ color: 'var(--color-text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--color-teal-light)'} onMouseLeave={(e) => e.target.style.color = 'var(--color-text-muted)'}>
-            Doctors & Availability
+            Doctors
           </a>
           <a href="#workflow" style={{ color: 'var(--color-text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--color-teal-light)'} onMouseLeave={(e) => e.target.style.color = 'var(--color-text-muted)'}>
             How It Works
@@ -120,29 +133,66 @@ export default function Home() {
           </a>
         </div>
 
-        {/* Auth CTA */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {user ? (
-            <Link to={ROLE_HOME_ROUTES[user.role] || '/'} className="btn btn-primary">
-              <UserCheck size={16} /> Dashboard ({user.name.split(' ')[0]})
-            </Link>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-secondary">
-                <LogIn size={15} /> Sign In
+        {/* Right: Auth CTA + mobile hamburger */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexShrink: 0 }}>
+          {/* Desktop auth buttons */}
+          <div className="home-nav-links" style={{ gap: '0.625rem' }}>
+            {user ? (
+              <Link to={ROLE_HOME_ROUTES[user.role] || '/'} className="btn btn-primary btn-sm">
+                <UserCheck size={15} /> Dashboard
               </Link>
-              <Link to="/register" className="btn btn-primary">
-                <Calendar size={15} /> Book Appointment
-              </Link>
-            </>
-          )}
+            ) : (
+              <>
+                <Link to="/login" className="btn btn-secondary btn-sm">
+                  <LogIn size={14} /> Sign In
+                </Link>
+                <Link to="/register" className="btn btn-primary btn-sm">
+                  <Calendar size={14} /> Book Now
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile hamburger — CSS .show-mobile makes it flex only on mobile */}
+          <button
+            className="hamburger-btn show-mobile"
+            onClick={toggleMobileMenu}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
+
+        {/* Mobile dropdown — position:fixed anchored below nav via measured top */}
+        {mobileMenuOpen && (
+          <div className="home-mobile-menu" style={{ top: menuTop }}>
+            <a href="#services" onClick={() => setMobileMenuOpen(false)}>Specialties</a>
+            <a href="#doctors"  onClick={() => setMobileMenuOpen(false)}>Doctors &amp; Availability</a>
+            <a href="#workflow" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
+            <a href="#facilities" onClick={() => setMobileMenuOpen(false)}>Facilities</a>
+            <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '0.375rem 0' }} />
+            {user ? (
+              <Link to={ROLE_HOME_ROUTES[user.role] || '/'} className="btn btn-primary" onClick={() => setMobileMenuOpen(false)} style={{ justifyContent: 'center' }}>
+                <UserCheck size={15} /> Go to Dashboard
+              </Link>
+            ) : (
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <Link to="/login" className="btn btn-secondary" onClick={() => setMobileMenuOpen(false)} style={{ flex: 1, justifyContent: 'center' }}>
+                  <LogIn size={15} /> Sign In
+                </Link>
+                <Link to="/register" className="btn btn-primary" onClick={() => setMobileMenuOpen(false)} style={{ flex: 1, justifyContent: 'center' }}>
+                  <Calendar size={15} /> Book Now
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
       </nav>
 
       {/* ─── HERO BANNER SECTION ───── */}
       <section style={{
         position: 'relative',
-        padding: '5rem 2rem 4rem',
+        padding: 'clamp(3rem, 8vw, 5rem) clamp(1rem, 4vw, 2rem) clamp(2.5rem, 6vw, 4rem)',
         background: 'radial-gradient(ellipse at 50% 20%, rgba(13, 148, 136, 0.15) 0%, rgba(99, 102, 241, 0.08) 40%, transparent 80%)',
         overflow: 'hidden',
       }}>
@@ -231,7 +281,7 @@ export default function Home() {
       </section>
 
       {/* ─── SPECIALTY DEPARTMENTS SECTION ─────────────────────────────── */}
-      <section id="services" style={{ padding: '5rem 2rem', background: 'var(--color-surface)' }}>
+      <section id="services" style={{ padding: 'clamp(3rem, 7vw, 5rem) clamp(1rem, 4vw, 2rem)', background: 'var(--color-surface)' }}>
         <div style={{ maxWidth: 1140, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
             <span style={{ fontSize: '0.8125rem', color: 'var(--color-teal-light)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
@@ -302,7 +352,7 @@ export default function Home() {
       </section>
 
       {/* ─── LIVE DOCTORS & AVAILABILITY SECTION ───────────────────────── */}
-      <section id="doctors" style={{ padding: '5rem 2rem' }}>
+      <section id="doctors" style={{ padding: 'clamp(3rem, 7vw, 5rem) clamp(1rem, 4vw, 2rem)' }}>
         <div style={{ maxWidth: 1140, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
@@ -409,7 +459,7 @@ export default function Home() {
       </section>
 
       {/* ─── HOW IT WORKS (AUTOMATED QUEUE WORKFLOW) ───────────────────── */}
-      <section id="workflow" style={{ padding: '5rem 2rem', background: 'var(--color-surface)' }}>
+      <section id="workflow" style={{ padding: 'clamp(3rem, 7vw, 5rem) clamp(1rem, 4vw, 2rem)', background: 'var(--color-surface)' }}>
         <div style={{ maxWidth: 1140, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
             <span style={{ fontSize: '0.8125rem', color: 'var(--color-teal-light)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
@@ -449,7 +499,7 @@ export default function Home() {
       </section>
 
       {/* ─── FACILITIES & WHY CHOOSE US ───────────────────────────────── */}
-      <section id="facilities" style={{ padding: '5rem 2rem' }}>
+      <section id="facilities" style={{ padding: 'clamp(3rem, 7vw, 5rem) clamp(1rem, 4vw, 2rem)' }}>
         <div style={{ maxWidth: 1140, margin: '0 auto' }}>
           <div className="grid-2" style={{ alignItems: 'center', gap: '3rem' }}>
             <div>
@@ -533,7 +583,7 @@ export default function Home() {
       <footer style={{
         background: 'var(--color-navy)',
         borderTop: '1px solid var(--color-border)',
-        padding: '3rem 2rem 1.5rem',
+        padding: 'clamp(2rem, 5vw, 3rem) clamp(1rem, 4vw, 2rem) 1.5rem',
       }}>
         <div style={{ maxWidth: 1140, margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '2rem', marginBottom: '2.5rem' }}>

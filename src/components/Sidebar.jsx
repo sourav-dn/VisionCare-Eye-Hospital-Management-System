@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Users, DoorOpen, Building2, BarChart3,
   Ticket, ClipboardList, FileText, Calendar, History,
-  LogOut, Eye, Stethoscope, UserCircle, ChevronRight, Settings,
+  LogOut, Eye, Stethoscope, UserCircle, ChevronRight, Settings, X,
 } from 'lucide-react';
 
 const ROLE_MENUS = {
@@ -19,7 +19,7 @@ const ROLE_MENUS = {
   receptionist: [
     { to: '/receptionist',              label: 'Dashboard',      icon: LayoutDashboard },
     { to: '/receptionist/new-ticket',   label: 'New Ticket',     icon: Ticket },
-    { to: '/receptionist/queue',        label: 'Today\'s Queue', icon: ClipboardList },
+    { to: '/receptionist/queue',        label: "Today's Queue",  icon: ClipboardList },
     { to: '/receptionist/prescriptions',label: 'Prescriptions',  icon: FileText },
     { to: '/settings',                  label: 'Settings',       icon: Settings },
   ],
@@ -29,10 +29,10 @@ const ROLE_MENUS = {
     { to: '/settings',         label: 'Settings',        icon: Settings },
   ],
   patient: [
-    { to: '/patient',          label: 'My Portal',       icon: UserCircle },
-    { to: '/patient/book',     label: 'Book Appointment',icon: Calendar },
-    { to: '/patient/history',  label: 'My History',      icon: History },
-    { to: '/settings',         label: 'Settings',        icon: Settings },
+    { to: '/patient',          label: 'My Portal',        icon: UserCircle },
+    { to: '/patient/book',     label: 'Book Appointment', icon: Calendar },
+    { to: '/patient/history',  label: 'My History',       icon: History },
+    { to: '/settings',         label: 'Settings',         icon: Settings },
   ],
 };
 
@@ -50,7 +50,7 @@ const ROLE_COLORS = {
   patient:      '#3B82F6',
 };
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth();
   const navigate          = useNavigate();
 
@@ -65,8 +65,15 @@ export default function Sidebar() {
     navigate('/login');
   };
 
+  const handleNavClick = () => {
+    // Close drawer on mobile when a nav item is clicked
+    if (window.innerWidth <= 768) {
+      onClose?.();
+    }
+  };
+
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${isOpen ? ' sidebar-open' : ''}`}>
       {/* Logo */}
       <div className="sidebar-logo">
         <div style={{
@@ -75,10 +82,11 @@ export default function Sidebar() {
           border: `1px solid ${roleColor}44`,
           borderRadius: 10,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
         }}>
           <Eye size={20} color={roleColor} />
         </div>
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '0.95rem', color: '#E2E8F0' }}>
             VisionCare
           </div>
@@ -86,6 +94,14 @@ export default function Sidebar() {
             {roleLabel}
           </div>
         </div>
+        {/* Mobile close button — visible only on mobile via CSS */}
+        <button
+          onClick={onClose}
+          className="hamburger-btn show-mobile"
+          aria-label="Close menu"
+        >
+          <X size={16} />
+        </button>
       </div>
 
       {/* User info */}
@@ -116,7 +132,7 @@ export default function Sidebar() {
               : user.name?.charAt(0)?.toUpperCase()
             }
           </div>
-          <div style={{ overflow: 'hidden' }}>
+          <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#E2E8F0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {user.name}
             </div>
@@ -140,6 +156,7 @@ export default function Sidebar() {
             to={to}
             end={to === '/admin' || to === '/doctor' || to === '/patient' || to === '/receptionist'}
             className={({ isActive }) => `sidebar-item${isActive ? ' active' : ''}`}
+            onClick={handleNavClick}
           >
             <Icon size={18} />
             <span style={{ flex: 1 }}>{label}</span>
@@ -149,7 +166,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout */}
-      <div style={{ padding: '0.75rem' }}>
+      <div style={{ padding: '0.75rem', flexShrink: 0 }}>
         <button
           onClick={handleLogout}
           className="btn btn-ghost"
