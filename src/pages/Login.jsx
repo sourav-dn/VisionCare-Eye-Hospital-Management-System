@@ -5,18 +5,18 @@ import { Eye, EyeOff, Stethoscope } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Login() {
-  const [email,    setEmail]    = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPwd,  setShowPwd]  = useState(false);
-  const [loading,  setLoading]  = useState(false);
-  const { login }               = useAuth();
-  const navigate                = useNavigate();
+  const [showPwd, setShowPwd] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const ROLE_ROUTES = {
-    admin:        '/admin',
+    admin: '/admin',
     receptionist: '/receptionist',
-    doctor:       '/doctor',
-    patient:      '/patient',
+    doctor: '/doctor',
+    patient: '/patient',
   };
 
   const handleSubmit = async (e) => {
@@ -125,12 +125,12 @@ export default function Login() {
         </div>
 
         {/* Demo hints */}
-        <div className="alert alert-info" style={{ marginTop: '1.25rem', fontSize: '0.75rem' }}>
+        {/* <div className="alert alert-info" style={{ marginTop: '1.25rem', fontSize: '0.75rem' }}>
           <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Demo Credentials</div>
           <div>Admin: admin@visioncare.com / Admin@123</div>
           <div>Doctor: arjun@visioncare.com / Doctor@123</div>
           <div>Reception: reception@visioncare.com / Recept@123</div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
